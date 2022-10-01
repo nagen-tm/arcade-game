@@ -4,7 +4,7 @@ window.addEventListener('load', function(){
   // this sets 2D or 3D property
   const ctx = canvas.getContext('2d');
   const gameWidth = canvas.width = 1500;
-  const gameHeight = canvas.height = 500;
+  const gameHeight = canvas.height = 1000;
 
   /* objects:
     each object has a constructor property that creates a new object when the class is called. properties are then assigned
@@ -16,7 +16,7 @@ window.addEventListener('load', function(){
       // the input handler adds to an array the key press when key is down, removes it from the array when key is up 
       window.addEventListener('keydown', e => {
         // checks if arrow up is pressed and not already in the array this stops holding the up key down continuously
-        if(((e.key === 'ArrowUp') || (e.key === 'ArrowDown')) && this.game.keys.indexOf(e.key) === -1) {
+        if(((e.key === 'ArrowLeft') || (e.key === 'ArrowRight')) && this.game.keys.indexOf(e.key) === -1) {
           this.game.keys.push(e.key);
         } else if (e.key === ' '){
           this.game.player.shoot();
@@ -35,19 +35,19 @@ window.addEventListener('load', function(){
     constructor(game, x, y){
       this.game = game;
       this.x = x;
-      this.y =y;
-      this.width = 10;
-      this.height= 3;
-      this.speed = 3;
+      this.y = y;
+      this.width = 3;
+      this.height= 10;
+      this.speed = -3;
       this.markedForDeletion = false;
     }
     update(){
       // removes the laser after getting to 80% of the screen
-      this.x += this.speed;
-      if (this.x > this.game.width * 0.8) this.markedForDeletion = true;
+      this.y += this.speed;
+      if (this.y > this.game.width * 0.8) this.markedForDeletion = true;
     }
     draw(context){
-      context.fillStyle = 'yellow';
+      context.fillStyle = '#FF7300';
       context.fillRect(this.x, this.y, this.width, this.height)
     }
   }
@@ -59,20 +59,20 @@ window.addEventListener('load', function(){
   class Player {
     constructor(game){
       this.game = game;
-      this.width = 120;
-      this.height= 190;
-      this.x = 20;
-      this.y = 100;
-      this.speedY = 0;
-      this.maxSpeed = 2;
+      this.width = 90;
+      this.height= 90;
+      this.x = 750;
+      this.y = 850;
+      this.speedX = 0;
+      this.maxSpeed = 5;
       this.projectiles= [];
     }
     update(){
       // updates player behavior from input
-      if (this.game.keys.includes('ArrowUp')) this.speedY = -this.maxSpeed;
-      else if (this.game.keys.includes('ArrowDown')) this.speedY = this.maxSpeed;
-      else this.speedY = 0
-      this.y += this.speedY;
+      if (this.game.keys.includes('ArrowLeft')) this.speedX = -this.maxSpeed;
+      else if (this.game.keys.includes('ArrowRight')) this.speedX = this.maxSpeed;
+      else this.speedX = 0
+      this.x += this.speedX;
       // updated projectile and removes from array based on boolean
       this.projectiles.forEach(projectile => {
         projectile.update();
@@ -80,16 +80,16 @@ window.addEventListener('load', function(){
       this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion);
     }
     draw(context){
-      context.fillStyle = 'black';
+      context.fillStyle = '#7B7D7D';
       context.fillRect(this.x, this.y, this.width, this.height);
       this.projectiles.forEach(projectile => {
         projectile.draw(context);
       });
     }
     shoot(){
-      // creates projectile based on ammo amount 
+      // creates projectile based on ammo amount, adjust x, y for positioning on player 
       if (this.game.ammo > 0){
-        this.projectiles.push(new Projectile(this.game, this.x + 80, this.y + 30));
+        this.projectiles.push(new Projectile(this.game, this.x + 44, this.y));
         this.game.ammo--;
       }
     }
@@ -97,18 +97,18 @@ window.addEventListener('load', function(){
   class Enemy {
     constructor(game){
       this.game = game;
-      this.x = this.game.width;
-      this.speedX = Math.random() * -1.5 - 0.5;
+      this.y = 0;
+      this.speedY = Math.random() * 1.5 + 0.5;
       this.markedForDeletion = false;
       this.lives = 5;
       this.score = this.lives;
     }
     update(){
-      this.x += this.speedX;
-      if(this.x + this.width < 0) this.markedForDeletion = true;
+      this.y += this.speedY;
+      if(this.y + this.height < 0) this.markedForDeletion = true;
     }
     draw(context){
-      context.fillStyle = 'red';
+      context.fillStyle = '#9B132B';
       context.fillRect(this.x, this.y, this.width, this.height);
       context.fillStyle ='black';
       context.font = '20px Helvetica';
@@ -122,7 +122,7 @@ window.addEventListener('load', function(){
       super(game);
       this.width = 50;
       this.height = 50;
-      this.y = Math.random() * (this.game.height * 0.9 - this.height);
+      this.x = Math.random() * (this.game.width * 0.9 - this.width);
     }
   }
   class Layer {
@@ -219,7 +219,7 @@ window.addEventListener('load', function(){
             projectile.markedForDeletion = true;
             if (enemy.lives <= 0){
               enemy.markedForDeletion = true;
-              this.score+= enemy.score;
+              this.score++;
               if (this.score > this.winningScore) this.gameOver = true;
             }
           }
@@ -246,10 +246,10 @@ window.addEventListener('load', function(){
     }
     collisionCheck(rect1, rect2){
       return(
-        rect1.x < rect2.x + rect2.width &&
-        rect1.x + rect1.width > rect2.x &&
-        rect1.y < rect2.y + rect2.y &&
-        rect1.height + rect1.y > rect2.y
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y &&
+        rect1.x < rect2.x + rect2.x &&
+        rect1.width + rect1.x > rect2.x
       );
     }
   }

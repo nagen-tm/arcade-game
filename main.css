@@ -5,12 +5,12 @@
 }
 
 #gameCanvas {
-  border: 5px solid black;
+  border: 5px solid #1E1E20;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: lightblue;
+  background: #393940;
   max-width: 100%;
   max-height: 100%;
 }
