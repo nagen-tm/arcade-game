@@ -12,13 +12,40 @@ window.addEventListener('load', function(){
     based on the object's design
   */
   class InputHandler {
-
+    constructor(game){
+      this.game = game;
+      /* 
+      the input handler adds to an array the key press 
+      when key is down, removes it from the array when key is up 
+      */
+      window.addEventListener('keydown', e => {
+        /* 
+        checks if arrow up is pressed and not already in the array
+        this stops holding the up key down continuously
+        */
+        if(((e.key === 'ArrowUp') || (e.key === 'ArrowDown')) && this.game.keys.indexOf(e.key) === -1) {
+          this.game.keys.push(e.key);
+        }
+        console.log(this.game.keys);
+      });
+      window.addEventListener('keyup', e => {
+        let keyIndex = this.game.keys.indexOf(e.key);
+        if (keyIndex > -1){
+          this.game.keys.splice(keyIndex, 1);
+        }
+        console.log(this.game.keys);
+      });
+    }
   }
   class Projectile {
-
+    constructor(){
+      
+    }
   }
   class Particle {
-
+    constructor(){
+      
+    }
   }
   class Player {
     constructor(game){
@@ -27,9 +54,12 @@ window.addEventListener('load', function(){
       this.height= 190;
       this.x = 20;
       this.y = 100;
-      this.speedY = 0.2;
+      this.speedY = 0;
     }
     update(){
+      // updates player behavior from input
+      if (this.game.keys.includes('ArrowUp')) this.speedY = -1;
+      else if (this.game.keys.includes('ArrowDown')) this.speedY = 1;
       this.y += this.speedY;
     }
     draw(context){
@@ -37,22 +67,33 @@ window.addEventListener('load', function(){
     }
   }
   class Enemy {
-
+    constructor(){
+      
+    }
   }
   class Layer {
-
+    constructor(){
+      
+    }
   }
   class Background {
-
+    constructor(){
+      
+    }
   }
   class UI {
-
+    constructor(){
+      
+    }
   }
   class Game {
     constructor(width, height){
       this.width = width;
       this.height = height;
+      // passing this to the new objects refers to this Game class
       this.player = new Player(this);
+      this.input = new InputHandler(this);
+      this.keys = [];
     }
     update(){
       this.player.update()
