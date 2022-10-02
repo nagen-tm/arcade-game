@@ -8,16 +8,17 @@ Objectives:
 4. Finish the base tutorial and then create my own assets
 
 Added features: 
-1. Multiple enemies with different point levels
-2. Player lives, extra lives at intervals
-3. Increased enemies over time
-4. Missed enemies takes away lives
-5. Start on click
+- Multiple enemies with different point levels
+- Player lives, extra lives at intervals
+- Increased enemies over time
+- Missed enemies takes away lives
+- Start on click
 
 To Dos:
-1. Keeping track of high score
-2. Restart button
-3. Create visual assets
+- Keeping track of high score
+- Restart button
+- Create visual assets
 
-
-Notes: 
+Bugs: 
+- collision function may need adjusted for vertical format
+- can't shoot the far enemies

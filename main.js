@@ -5,6 +5,9 @@ window.addEventListener('load', function(){
   const ctx = canvas.getContext('2d');
   const gameWidth = canvas.width = 1500;
   const gameHeight = canvas.height = 1000;
+  const fontFamily = 'Helvetica';
+  const fontColor = 'white';
+  const fontSize = '25px ';
   /* objects:
     each class has a constructor property that creates a new object when the class is called. properties are then assigned
     based on the class design
@@ -24,9 +27,7 @@ window.addEventListener('load', function(){
 
       window.addEventListener('keyup', e => {
         let keyIndex = this.game.keys.indexOf(e.key);
-        if (keyIndex > -1){
-          this.game.keys.splice(keyIndex, 1);
-        }
+        if(keyIndex > -1) this.game.keys.splice(keyIndex, 1);
       });
     }
   }
@@ -144,7 +145,7 @@ window.addEventListener('load', function(){
       if(this.y + this.height > this.game.height) this.markedForDeletion = true;
     }
     draw(context){
-      context.fillStyle = '#green';
+      context.fillStyle = 'green';
       context.fillRect(this.x, this.y, this.width, this.height);
     }
   }
@@ -161,19 +162,16 @@ window.addEventListener('load', function(){
   class UI {
     constructor(game){
       this.game = game;
-      this.fontSize = 25;
-      this.fontFamily = 'Helvetica';
-      this.color = 'white';
     }
     draw(context){
       // save and restore saves the contexts at that time, and its restored at context.restore
       context.save();
       //shadow is only set to whats in between save and restore
-      context.shadowOffsetX = 2;
-      context.shadowOffsetY = 2;
+      context.shadowOffsetX = 4;
+      context.shadowOffsetY = 4;
       context.shadowColor = 'black';
-      context.fillStyle = this.color;
-      context.font = this.fontSize + 'px ' + this.fontFamily;
+      context.fillStyle = fontColor;
+      context.font = fontSize + fontFamily;
       // score
       context.fillText('Score: ' + this.game.score, this.game.width - 150, 40);
       // timer, formatting to seconds
@@ -181,7 +179,7 @@ window.addEventListener('load', function(){
       context.fillText('Timer: ' + formattedTime, this.game.width - 150, 75);
       // ammo amount
       for(let i = 0; i < this.game.ammo; i++){
-        context.fillRect(20+5 * i, 50, 3, 20)
+        context.fillRect(20+8 * i, 50, 3, 20)
       }
       // lives
       for(let i = 0; i < this.game.playerLives; i++){
@@ -190,9 +188,9 @@ window.addEventListener('load', function(){
       // game over 
       if (this.game.gameOver){
         context.textAlign = 'center';
-        context.font = '50px ' + this.fontFamily;
+        context.font = '50px ' + fontFamily
         context.fillText('Game Over!', this.game.width * 0.5, this.game.height * 0.5 - 40);
-        context.font = '25px ' + this.fontFamily;
+        context.font = fontSize + fontFamily
         context.fillText('Better luck next time.', this.game.width * 0.5, this.game.height * 0.5 + 40);
       }
       context.restore();
@@ -244,7 +242,7 @@ window.addEventListener('load', function(){
         life.update();
         if (this.collisionCheck(this.player, life)){
           life.markedForDeletion = true;
-          if(this.playerLives < 5) this.playerLives++;
+          if(this.playerLives < 5 && !this.gameOver) this.playerLives++;
         }
       });
       this.enemies.forEach(enemy => {
@@ -278,7 +276,7 @@ window.addEventListener('load', function(){
         }
       });
       this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
-      this.lives = this.lives.filter(enemy => !enemy.markedForDeletion);
+      this.lives = this.lives.filter(lives => !lives.markedForDeletion);
       // adding enemies over time
       if (this.enemyTimer > this.enemyInterval && !this.gameOver){
         this.addEnemy();
@@ -308,7 +306,7 @@ window.addEventListener('load', function(){
         life.draw(context);
       });
     }
-    // functions used in update
+    // functions used in update for randomized type of enemy
     addEnemy(){
       const randomize = Math.random();
       if (randomize < 0.5) this.enemies.push(new Alien(this));
@@ -327,19 +325,18 @@ window.addEventListener('load', function(){
     constructor(width, height){
       this.width = width;
       this.height = height;
-      this.fontSize = 25;
-      this.fontFamily = 'Helvetica';
-      this.color = 'white';    
     }
     draw(context){
-      context.shadowOffsetX = 2;
-      context.shadowOffsetY = 2;
+      context.shadowOffsetX = 4;
+      context.shadowOffsetY = 4;
       context.shadowColor = 'black';
-      context.fillStyle = this.color;
-      context.font = this.fontSize + 'px ' + this.fontFamily;
+      context.fillStyle = fontColor;
+      
       context.textAlign = 'center';
-      context.font = '50px ' + this.fontFamily;
+      context.font = '50px ' + fontFamily
       context.fillText('Click to start.', this.width * 0.5, this.height * 0.5 - 40);
+      context.font = fontSize + fontFamily
+      context.fillText('<- and -> for movement, space for ammo', this.width * 0.5, this.height * 0.5 + 40);
     }
   }
   /* 
@@ -371,10 +368,8 @@ window.addEventListener('load', function(){
     */
     requestAnimationFrame(animation);
   }
-
   //starts animation on click
   window.addEventListener('click', function(){
     animation(0);
   })
-
 });
