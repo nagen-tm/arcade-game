@@ -14,4 +14,7 @@ Added features:
 4. Missed enemies takes away lives
 
 To Dos:
-1. Create visual assets
+1. Starting screen
+2. Keeping track of high score
+3. Restart button
+4. Create visual assets
