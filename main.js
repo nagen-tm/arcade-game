@@ -103,7 +103,7 @@ window.addEventListener('load', function(){
     }
     update(){
       this.y += this.speedY;
-      if(this.y + this.height < 0) this.markedForDeletion = true;
+      if(this.y + this.height > this.game.height) this.markedForDeletion = true;
     }
     draw(context){
       context.fillStyle = '#FA71B9';
@@ -161,30 +161,25 @@ window.addEventListener('load', function(){
       context.fillStyle = this.color;
       // score
       context.font = this.fontSize + 'px ' + this.fontFamily;
-      context.fillText('Score: ' + this.game.score, 20, 40);
+      context.fillText('Score: ' + this.game.score, this.game.width - 150, 40);
       // timer, formating to seconds
       const formattedTime = (this.game.gameTime * 0.001).toFixed(1);
-      context.fillText('Timer: ' + formattedTime, 20, 75);
+      context.fillText('Timer: ' + formattedTime, this.game.width - 150, 75);
       // ammo amount
       for(let i = 0; i < this.game.ammo; i++){
-        context.fillRect(20+5 * i, 95, 3, 20)
+        context.fillRect(20+5 * i, 50, 3, 20)
+      }
+      // lives
+      for(let i = 0; i < this.game.playerLives; i++){
+        context.fillRect(20+25 * i, 20, 20, 20)
       }
       // game over 
       if (this.game.gameOver){
         context.textAlign = 'center';
-        let message1;
-        let message2;
-        if (this.game.score > this.game.winningScore){
-          message1 = 'You Win!';
-          message2 = 'Well Done!';
-        } else {
-          message1 = 'You Lose!';
-          message2 = 'Try again.';
-        }
         context.font = '50px ' + this.fontFamily;
-        context.fillText(message1, this.game.width * 0.5, this.game.height * 0.5 - 40);
+        context.fillText('Game Over!', this.game.width * 0.5, this.game.height * 0.5 - 40);
         context.font = '25px ' + this.fontFamily;
-        context.fillText(message2, this.game.width * 0.5, this.game.height * 0.5 + 40);
+        context.fillText('Better luck next time.', this.game.width * 0.5, this.game.height * 0.5 + 40);
       }
       context.restore();
     }
@@ -203,15 +198,16 @@ window.addEventListener('load', function(){
       this.keys = [];
       this.enemies = [];
       this.enemyCount = 0;
+      this.enemyMiss = 0;
       this.enemyTimer = 0;
       this.enemyInterval = 3000;
       this.ammo = 20;
       this.maxAmmo = 50;
       this.ammoTimer = 0;
       this.ammoInterval = 500;
+      this.playerLives = 5;
       this.gameOver = false;
       this.score = 0;
-      this.winningScore = 10;
       this.gameTime = 0;
     }
     update(deltaTime){
@@ -225,13 +221,16 @@ window.addEventListener('load', function(){
       } else {
         this.ammoTimer += deltaTime;
       }
-      // mark enemies for deletion if hit by projectiles
+      // collision checks
       this.enemies.forEach(enemy => {
         enemy.update();
-        // remove/update this for enemies hitting player
+        // update player lives 
         if (this.collisionCheck(this.player, enemy)){
           enemy.markedForDeletion = true;
+          this.playerLives--;
+          if (this.playerLives === 0) this.gameOver = true;
         }
+        // updates score and removes enemy
         this.player.projectiles.forEach(projectile => {
           if(this.collisionCheck(projectile, enemy)){
             enemy.lives--;
@@ -239,10 +238,19 @@ window.addEventListener('load', function(){
             if (enemy.lives <= 0){
               enemy.markedForDeletion = true;
               if (!this.gameOver) this.score += enemy.points;
-              if (this.score > this.winningScore) this.gameOver = true;
             }
           }
         })
+        // take a life if too many enemies are missed
+        if(enemy.y + enemy.height > this.height) {
+          console.log(enemy.y)
+          this.enemyMiss++
+          if(this.enemyMiss === 5){
+            this.playerLives--;
+            this.enemyMiss = 0;
+            if (this.playerLives === 0) this.gameOver = true;
+          }
+        }
       });
       this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
       // adding enemies
@@ -279,7 +287,6 @@ window.addEventListener('load', function(){
       );
     }
   }
-
   /* 
   calling the game object that in turn executes its constructor and builds out the other objects. the new Game()
   needs to pass all relevant information
