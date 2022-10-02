@@ -5,7 +5,6 @@ window.addEventListener('load', function(){
   const ctx = canvas.getContext('2d');
   const gameWidth = canvas.width = 1500;
   const gameHeight = canvas.height = 1000;
-
   /* objects:
     each class has a constructor property that creates a new object when the class is called. properties are then assigned
     based on the class design
@@ -49,11 +48,6 @@ window.addEventListener('load', function(){
     draw(context){
       context.fillStyle = '#72D1EE';
       context.fillRect(this.x, this.y, this.width, this.height)
-    }
-  }
-  class Particle {
-    constructor(){
-      
     }
   }
   class Player {
@@ -134,6 +128,26 @@ window.addEventListener('load', function(){
       this.x = Math.random() * (this.game.width * 0.8 - this.width);
     }
   }
+  class Lives {
+    constructor(game){
+      this.game = game;
+      this.y = 0;
+      this.speedY = Math.random() * 1.5 + 0.5;
+      this.markedForDeletion = false;
+      this.width = 25;
+      this.height = 25;
+
+      this.x = Math.random() * (this.game.width * 0.8 - this.width);
+    }
+    update(){
+      this.y += this.speedY;
+      if(this.y + this.height > this.game.height) this.markedForDeletion = true;
+    }
+    draw(context){
+      context.fillStyle = '#green';
+      context.fillRect(this.x, this.y, this.width, this.height);
+    }
+  }
   class Layer {
     constructor(){
       
@@ -154,15 +168,15 @@ window.addEventListener('load', function(){
     draw(context){
       // save and restore saves the contexts at that time, and its restored at context.restore
       context.save();
-      //shadow is only set to whats inbetween save and restore
+      //shadow is only set to whats in between save and restore
       context.shadowOffsetX = 2;
-      context.shadwoOffsetY = 2;
+      context.shadowOffsetY = 2;
       context.shadowColor = 'black';
       context.fillStyle = this.color;
-      // score
       context.font = this.fontSize + 'px ' + this.fontFamily;
+      // score
       context.fillText('Score: ' + this.game.score, this.game.width - 150, 40);
-      // timer, formating to seconds
+      // timer, formatting to seconds
       const formattedTime = (this.game.gameTime * 0.001).toFixed(1);
       context.fillText('Timer: ' + formattedTime, this.game.width - 150, 75);
       // ammo amount
@@ -195,6 +209,7 @@ window.addEventListener('load', function(){
       this.player = new Player(this);
       this.input = new InputHandler(this);
       this.ui = new UI(this);
+      this.start = false;
       this.keys = [];
       this.enemies = [];
       this.enemyCount = 0;
@@ -205,6 +220,9 @@ window.addEventListener('load', function(){
       this.maxAmmo = 50;
       this.ammoTimer = 0;
       this.ammoInterval = 500;
+      this.lives = [];
+      this.livesTimer = 0;
+      this.livesInterval = 45000;
       this.playerLives = 5;
       this.gameOver = false;
       this.score = 0;
@@ -215,13 +233,20 @@ window.addEventListener('load', function(){
       if (!this.gameOver) this.gameTime += deltaTime;
       // update ammo based on timer and max amount
       this.player.update()
-      if (this.ammoTimer > this.ammoInterval){
+      if (this.ammoTimer > this.ammoInterval && !this.gameOver){
         if (this.ammo < this.maxAmmo) this.ammo++
         this.ammoTimer = 0;
       } else {
         this.ammoTimer += deltaTime;
       }
       // collision checks
+      this.lives.forEach(life => {
+        life.update();
+        if (this.collisionCheck(this.player, life)){
+          life.markedForDeletion = true;
+          if(this.playerLives < 5) this.playerLives++;
+        }
+      });
       this.enemies.forEach(enemy => {
         enemy.update();
         // update player lives 
@@ -253,7 +278,8 @@ window.addEventListener('load', function(){
         }
       });
       this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
-      // adding enemies
+      this.lives = this.lives.filter(enemy => !enemy.markedForDeletion);
+      // adding enemies over time
       if (this.enemyTimer > this.enemyInterval && !this.gameOver){
         this.addEnemy();
         this.enemyTimer = 0;
@@ -264,12 +290,22 @@ window.addEventListener('load', function(){
       } else {
         this.enemyTimer += deltaTime;
       }
+      // extra lives
+      if (this.livesTimer > this.livesInterval && !this.gameOver){
+        this.lives.push(new Lives(this));
+        this.livesTimer = 0;
+      } else {
+        this.livesTimer += deltaTime;
+      }
     }
     draw(context){
       this.player.draw(context)
       this.ui.draw(context);
       this.enemies.forEach(enemy =>{
         enemy.draw(context);
+      });
+      this.lives.forEach(life => {
+        life.draw(context);
       });
     }
     // functions used in update
@@ -287,11 +323,38 @@ window.addEventListener('load', function(){
       );
     }
   }
+  class Start {
+    constructor(width, height){
+      this.width = width;
+      this.height = height;
+      this.fontSize = 25;
+      this.fontFamily = 'Helvetica';
+      this.color = 'white';    
+    }
+    draw(context){
+      context.shadowOffsetX = 2;
+      context.shadowOffsetY = 2;
+      context.shadowColor = 'black';
+      context.fillStyle = this.color;
+      context.font = this.fontSize + 'px ' + this.fontFamily;
+      context.textAlign = 'center';
+      context.font = '50px ' + this.fontFamily;
+      context.fillText('Click to start.', this.width * 0.5, this.height * 0.5 - 40);
+    }
+  }
   /* 
   calling the game object that in turn executes its constructor and builds out the other objects. the new Game()
   needs to pass all relevant information
   */
   const game = new Game(gameWidth, gameHeight);
+  const start = new Start(gameWidth, gameHeight);
+  function startScreen(){
+    ctx.clearRect(0, 0, gameWidth, gameHeight);
+    start.draw(ctx);
+    requestAnimationFrame(startScreen);
+  }
+  startScreen(0)
+
   let lastTime = 0;
   // animation loop
   function animation(timeStamp){
@@ -309,5 +372,9 @@ window.addEventListener('load', function(){
     requestAnimationFrame(animation);
   }
 
-  animation(0);
+  //starts animation on click
+  window.addEventListener('click', function(){
+    animation(0);
+  })
+
 });

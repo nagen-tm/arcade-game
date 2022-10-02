@@ -9,12 +9,15 @@ Objectives:
 
 Added features: 
 1. Multiple enemies with different point levels
-2. Player lives
+2. Player lives, extra lives at intervals
 3. Increased enemies over time
 4. Missed enemies takes away lives
+5. Start on click
 
 To Dos:
-1. Starting screen
-2. Keeping track of high score
-3. Restart button
-4. Create visual assets
+1. Keeping track of high score
+2. Restart button
+3. Create visual assets
+
+
+Notes: 
