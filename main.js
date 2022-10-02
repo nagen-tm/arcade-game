@@ -7,8 +7,8 @@ window.addEventListener('load', function(){
   const gameHeight = canvas.height = 1000;
 
   /* objects:
-    each object has a constructor property that creates a new object when the class is called. properties are then assigned
-    based on the object's design
+    each class has a constructor property that creates a new object when the class is called. properties are then assigned
+    based on the class design
   */
   class InputHandler {
     constructor(game){
@@ -37,7 +37,7 @@ window.addEventListener('load', function(){
       this.x = x;
       this.y = y;
       this.width = 3;
-      this.height= 10;
+      this.height= 15;
       this.speed = -3;
       this.markedForDeletion = false;
     }
@@ -47,7 +47,7 @@ window.addEventListener('load', function(){
       if (this.y > this.game.width * 0.8) this.markedForDeletion = true;
     }
     draw(context){
-      context.fillStyle = '#FF7300';
+      context.fillStyle = '#72D1EE';
       context.fillRect(this.x, this.y, this.width, this.height)
     }
   }
@@ -80,7 +80,7 @@ window.addEventListener('load', function(){
       this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion);
     }
     draw(context){
-      context.fillStyle = '#7B7D7D';
+      context.fillStyle = '#8CCDE1';
       context.fillRect(this.x, this.y, this.width, this.height);
       this.projectiles.forEach(projectile => {
         projectile.draw(context);
@@ -100,29 +100,38 @@ window.addEventListener('load', function(){
       this.y = 0;
       this.speedY = Math.random() * 1.5 + 0.5;
       this.markedForDeletion = false;
-      this.lives = 5;
-      this.score = this.lives;
     }
     update(){
       this.y += this.speedY;
       if(this.y + this.height < 0) this.markedForDeletion = true;
     }
     draw(context){
-      context.fillStyle = '#9B132B';
+      context.fillStyle = '#FA71B9';
       context.fillRect(this.x, this.y, this.width, this.height);
-      context.fillStyle ='black';
-      context.font = '20px Helvetica';
-      context.fillText(this.lives, this.x, this.y);
     }
   }
   // OOP - inheritance of the enemy class 
-  class Angler extends Enemy {
+  class Alien extends Enemy {
     constructor(game){
       // combines the constructor properties from the parent class
       super(game);
       this.width = 50;
       this.height = 50;
-      this.x = Math.random() * (this.game.width * 0.9 - this.width);
+      this.lives = 5;
+      this.points = 1;
+      // random starting position within certain width
+      this.x = Math.random() * (this.game.width * 0.8 - this.width);
+    }
+  }
+  class Alien2 extends Enemy {
+    constructor(game){
+      // combines the constructor properties from the parent class
+      super(game);
+      this.width = 75;
+      this.height = 75;
+      this.lives = 8;
+      this.points = 2;
+      this.x = Math.random() * (this.game.width * 0.8 - this.width);
     }
   }
   class Layer {
@@ -149,14 +158,17 @@ window.addEventListener('load', function(){
       context.shadowOffsetX = 2;
       context.shadwoOffsetY = 2;
       context.shadowColor = 'black';
-      // ammo amount
       context.fillStyle = this.color;
-      for(let i = 0; i < this.game.ammo; i++){
-        context.fillRect(20+5 * i, 50, 3, 20)
-      }
       // score
-      context.font = this.fontSize + 'px' + this.fontFamily;
+      context.font = this.fontSize + 'px ' + this.fontFamily;
       context.fillText('Score: ' + this.game.score, 20, 40);
+      // timer, formating to seconds
+      const formattedTime = (this.game.gameTime * 0.001).toFixed(1);
+      context.fillText('Timer: ' + formattedTime, 20, 75);
+      // ammo amount
+      for(let i = 0; i < this.game.ammo; i++){
+        context.fillRect(20+5 * i, 95, 3, 20)
+      }
       // game over 
       if (this.game.gameOver){
         context.textAlign = 'center';
@@ -169,36 +181,43 @@ window.addEventListener('load', function(){
           message1 = 'You Lose!';
           message2 = 'Try again.';
         }
-        context.font = '50px' + this.fontFamily;
+        context.font = '50px ' + this.fontFamily;
         context.fillText(message1, this.game.width * 0.5, this.game.height * 0.5 - 40);
-        context.font = '25px' + this.fontFamily;
+        context.font = '25px ' + this.fontFamily;
         context.fillText(message2, this.game.width * 0.5, this.game.height * 0.5 + 40);
       }
       context.restore();
     }
   }
   class Game {
-    // builds all objects from the classes for the game
+    /* 
+    builds objects from the classes for the game and sets any variables needed 
+    passing 'this' to the new objects refers to this Game class, which is needed in each constructor
+    */
     constructor(width, height){
       this.width = width;
       this.height = height;
-      // passing this to the new objects refers to this Game class
       this.player = new Player(this);
       this.input = new InputHandler(this);
       this.ui = new UI(this);
       this.keys = [];
       this.enemies = [];
+      this.enemyCount = 0;
       this.enemyTimer = 0;
-      this.enemyInterval = 1000;
+      this.enemyInterval = 3000;
       this.ammo = 20;
       this.maxAmmo = 50;
       this.ammoTimer = 0;
       this.ammoInterval = 500;
       this.gameOver = false;
-      this.score =0;
+      this.score = 0;
       this.winningScore = 10;
+      this.gameTime = 0;
     }
     update(deltaTime){
+      // keeping time
+      if (!this.gameOver) this.gameTime += deltaTime;
+      // update ammo based on timer and max amount
       this.player.update()
       if (this.ammoTimer > this.ammoInterval){
         if (this.ammo < this.maxAmmo) this.ammo++
@@ -206,10 +225,10 @@ window.addEventListener('load', function(){
       } else {
         this.ammoTimer += deltaTime;
       }
-
-      // same thing as projectiles
+      // mark enemies for deletion if hit by projectiles
       this.enemies.forEach(enemy => {
         enemy.update();
+        // remove/update this for enemies hitting player
         if (this.collisionCheck(this.player, enemy)){
           enemy.markedForDeletion = true;
         }
@@ -219,16 +238,21 @@ window.addEventListener('load', function(){
             projectile.markedForDeletion = true;
             if (enemy.lives <= 0){
               enemy.markedForDeletion = true;
-              this.score++;
+              if (!this.gameOver) this.score += enemy.points;
               if (this.score > this.winningScore) this.gameOver = true;
             }
           }
         })
       });
       this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion);
+      // adding enemies
       if (this.enemyTimer > this.enemyInterval && !this.gameOver){
         this.addEnemy();
         this.enemyTimer = 0;
+        // decrease the enemyInterval depending on how many enemies there have been
+        if (this.enemyCount < 10 ) this.enemyCount++
+        else this.enemyCount = 0;
+        if (this.enemyCount === 10 && this.enemyInterval > 1000) this.enemyInterval -= 100;
       } else {
         this.enemyTimer += deltaTime;
       }
@@ -240,9 +264,11 @@ window.addEventListener('load', function(){
         enemy.draw(context);
       });
     }
-    // same as when we recharged the ammo
+    // functions used in update
     addEnemy(){
-      this.enemies.push(new Angler(this));
+      const randomize = Math.random();
+      if (randomize < 0.5) this.enemies.push(new Alien(this));
+      else this.enemies.push(new Alien2(this));
     }
     collisionCheck(rect1, rect2){
       return(
@@ -260,13 +286,12 @@ window.addEventListener('load', function(){
   */
   const game = new Game(gameWidth, gameHeight);
   let lastTime = 0;
-
   // animation loop
   function animation(timeStamp){
     // to calculate the time for regenerating ammo, deltaTime compares current time stamp to last time stamp
     const deltaTime = timeStamp - lastTime;
     lastTime = timeStamp;
-
+    
     ctx.clearRect(0, 0, gameWidth, gameHeight);
     game.update(deltaTime);
     game.draw(ctx);
